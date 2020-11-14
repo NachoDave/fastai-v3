@@ -8,7 +8,7 @@ from exp.nb_03 import *
 
 class DataBunch():
     def __init__(self, train_dl, valid_dl, c=None):
-        self.train_dl,self.valid_dl,self.c = train_dl,valid_dl,c
+        self.train_dl,self.valid_dl,self.c = train_dl,valid_dl,c # c is final number of acitvations
 
     @property
     def train_ds(self): return self.train_dl.dataset
@@ -73,11 +73,14 @@ def listify(o):
 class Runner():
     def __init__(self, cbs=None, cb_funcs=None):
         cbs = listify(cbs)
+        #print(cbs)
+        #print(cb_funcs)
         for cbf in listify(cb_funcs):
             cb = cbf()
             setattr(self, cb.name, cb)
             cbs.append(cb)
         self.stop,self.cbs = False,[TrainEvalCallback()]+cbs
+       # print(self.cbs)
 
     @property
     def opt(self):       return self.learn.opt
@@ -90,11 +93,11 @@ class Runner():
 
     def one_batch(self, xb, yb):
         self.xb,self.yb = xb,yb
-        if self('begin_batch'): return
+        if self('begin_batch'): return # if call back function returns TRUE then return from method
         self.pred = self.model(self.xb)
         if self('after_pred'): return
         self.loss = self.loss_func(self.pred, self.yb)
-        if self('after_loss') or not self.in_train: return
+        if self('after_loss') or not self.in_train: return # don't run the backward pass
         self.loss.backward()
         if self('after_backward'): return
         self.opt.step()
@@ -110,7 +113,7 @@ class Runner():
         self.stop=False
 
     def fit(self, epochs, learn):
-        self.epochs,self.learn,self.loss = epochs,learn,tensor(0.)
+        self.epochs,self.learn = epochs,learn
 
         try:
             for cb in self.cbs: cb.set_runner(self)
@@ -127,15 +130,19 @@ class Runner():
             self('after_fit')
             self.learn = None
 
-    def __call__(self, cb_name):
-        for cb in sorted(self.cbs, key=lambda x: x._order):
-            f = getattr(cb, cb_name, None)
+    def __call__(self, cb_name): # calls the call back
+        #print(cb_name)
+        for cb in sorted(self.cbs, key=lambda x: x._order): # sorts call backs by order
+            f = getattr(cb, cb_name, None) # if the cb has a cb_name function then get it
             if f and f(): return True
         return False
 
-class AvgStats():
-    def __init__(self, metrics, in_train): self.metrics,self.in_train = listify(metrics),in_train
 
+class AvgStats():
+    def __init__(self, metrics, in_train):
+        self.metrics,self.in_train = listify(metrics),in_train
+        print("Metrics:")
+        print(metrics)
     def reset(self):
         self.tot_loss,self.count = 0.,0
         self.tot_mets = [0.] * len(self.metrics)
@@ -154,7 +161,7 @@ class AvgStats():
         self.tot_loss += run.loss * bn
         self.count += bn
         for i,m in enumerate(self.metrics):
-            self.tot_mets[i] += m(run.pred, run.yb) * bn
+            self.tot_mets[i] += m(run.pred, run.yb) * bn # can have any metrics on the predictions and truth
 
 class AvgStatsCallback(Callback):
     def __init__(self, metrics):
@@ -166,7 +173,9 @@ class AvgStatsCallback(Callback):
 
     def after_loss(self):
         stats = self.train_stats if self.in_train else self.valid_stats
-        with torch.no_grad(): stats.accumulate(self.run)
+        with torch.no_grad():
+            stats.accumulate(self.run) # passes the runner in
+            #print(self.run)
 
     def after_epoch(self):
         print(self.train_stats)
