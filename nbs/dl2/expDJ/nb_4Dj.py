@@ -109,14 +109,14 @@ class TrainEvalCallback(Callback):
         if not self.in_train: return
         self.run.n_epochs += 1./self.iters
         self.run.n_iter   += 1
-        print("Iter: " + str(self.run.n_iter))
+        #print("Iter: " + str(self.run.n_iter))
 
 
     def begin_epoch(self):
         self.run.n_epochs=self.epoch
         self.model.train()
         self.run.in_train=True
-        print("Epoch: " + str(self.run.epochs))
+        print("Epoch: " + str(self.run.epoch))
         self.run.n_iter = 0
 
     def begin_validate(self):
