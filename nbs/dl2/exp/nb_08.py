@@ -5,6 +5,11 @@
 # file to edit: dev_nb/08_data_block.ipynb
 
 from exp.nb_07a import *
+import sys
+sys.path
+#sys.path.append("/data/fastaiOld/")
+from fastai import datasets
+sys.path
 
 import PIL,os,mimetypes
 Path.ls = lambda x: list(x.iterdir())
@@ -36,7 +41,9 @@ def get_files(path, extensions=None, recurse=False, include=None):
 
 def compose(x, funcs, *args, order_key='_order', **kwargs):
     key = lambda o: getattr(o, order_key, 0)
-    for f in sorted(listify(funcs), key=key): x = f(x, **kwargs)
+    for f in sorted(listify(funcs), key=key):
+        #print(f)
+        x = f(x, **kwargs)
     return x
 
 class ItemList(ListContainer):
@@ -79,7 +86,7 @@ def grandparent_splitter(fn, valid_name='valid', train_name='train'):
 
 def split_by_func(items, f):
     mask = [f(o) for o in items]
-    # `None` values will be filtered out
+     #`None` values will be filtered out
     f = [o for o,m in zip(items,mask) if m==False]
     t = [o for o,m in zip(items,mask) if m==True ]
     return f,t
@@ -204,6 +211,7 @@ def normalize_chan(x, mean, std):
 _m = tensor([0.47, 0.48, 0.45])
 _s = tensor([0.29, 0.28, 0.30])
 norm_imagenette = partial(normalize_chan, mean=_m.cuda(), std=_s.cuda())
+norm_imagenette
 
 import math
 def prev_pow_2(x): return 2**math.floor(math.log2(x))
